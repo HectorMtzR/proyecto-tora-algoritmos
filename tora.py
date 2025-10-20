@@ -1,5 +1,5 @@
-# TORA Replication App - Maximization Only
-# ----------------------------------------
+# TORA Replication App - Custom Variable Names
+# --------------------------------------------
 
 import numpy as np
 import pandas as pd
@@ -12,27 +12,30 @@ from itertools import combinations
 
 def obtener_datos_lp():
     """
-    Guía al usuario para que ingrese un problema de programación lineal de MAXIMIZACIÓN.
+    Guía al usuario para que ingrese un problema de programación lineal de MAXIMIZACIÓN,
+    incluyendo nombres para las variables.
     """
     print("--- Asistente para la Creación de Problemas de Programación Lineal (Maximización) ---")
 
-    # MODIFICACIÓN: Se elimina la pregunta sobre el tipo de problema.
-    # Ahora siempre será 'max'.
-
-    # Ingresar la Función Objetivo
     print("\nIntroduce los coeficientes de la función objetivo (Z), separados por espacios.")
     print("Ejemplo: para Z = 3x1 + 5x2, escribe: 3 5")
     coeficientes_str = input("Coeficientes: ").split()
     funcion_objetivo = np.array([float(c) for c in coeficientes_str])
     num_variables = len(funcion_objetivo)
 
-    # Ingresar las Restricciones
-    print(f"\nAhora, introduce las restricciones. El problema tiene {num_variables} variables (x1, x2, ...).")
+    # MODIFICACIÓN: Pedir los nombres de las variables
+    print("\n--- Asignación de Nombres a las Variables ---")
+    variable_names = []
+    for i in range(num_variables):
+        nombre = input(f"Nombre para la variable x{i+1} (ej. Sillas): ")
+        variable_names.append(nombre)
+
+    print(f"\nAhora, introduce las restricciones. El problema tiene las variables: {', '.join(variable_names)}.")
     restricciones = []
     i = 1
     while True:
         print(f"\n--- Restricción #{i} ---")
-        print("Introduce los coeficientes de la restricción, separados por espacios.")
+        print("Introduce los coeficientes de la restricción, en el mismo orden que las variables.")
         coef_restr_str = input(f"Coeficientes de la restricción {i}: ").split()
 
         if len(coef_restr_str) != num_variables:
@@ -62,19 +65,18 @@ def obtener_datos_lp():
         i += 1
         
     print("\n¡Problema ingresado con éxito!")
-    # MODIFICACIÓN: Solo devolvemos la función objetivo y las restricciones.
-    return funcion_objetivo, restricciones
+    # MODIFICACIÓN: Devolvemos también la lista con los nombres de las variables.
+    return variable_names, funcion_objetivo, restricciones
 
 # ==============================================================================
 # SECCIÓN 2: LÓGICA DEL MÉTODO SIMPLEX (MODIFICADO)
 # ==============================================================================
 
-def resolver_simplex(funcion_objetivo, restricciones):
+def resolver_simplex(variable_names, funcion_objetivo, restricciones):
     """
     Resuelve un problema de programación lineal de MAXIMIZACIÓN usando el método Simplex.
     """
-    # MODIFICACIÓN: Se elimina el parámetro 'tipo_problema' y la lógica de conversión.
-
+    # MODIFICACIÓN: Acepta 'variable_names' como parámetro.
     num_variables = len(funcion_objetivo)
     num_restricciones = len(restricciones)
     
@@ -88,9 +90,8 @@ def resolver_simplex(funcion_objetivo, restricciones):
 
     tableau[-1, :num_variables] = -funcion_objetivo
     
-    column_labels = [f'x{i+1}' for i in range(num_variables)] + \
-                    [f's{i+1}' for i in range(num_restricciones)] + \
-                    ['RHS']
+    # MODIFICACIÓN: Usa la lista 'variable_names' para las etiquetas de las columnas.
+    column_labels = variable_names + [f's{i+1}' for i in range(num_restricciones)] + ['RHS']
 
     print("\n--- Tableau Inicial ---")
     print(pd.DataFrame(tableau, columns=column_labels))
@@ -141,7 +142,6 @@ def resolver_simplex(funcion_objetivo, restricciones):
     
     print("\n--- Resultados ---")
     valor_optimo_z = tableau[-1, -1]
-    # MODIFICACIÓN: Se elimina la comprobación para problemas 'min'.
     print(f"Valor óptimo de Z = {valor_optimo_z:.4f}")
 
     for i in range(num_variables):
@@ -159,11 +159,11 @@ def resolver_simplex(funcion_objetivo, restricciones):
 # SECCIÓN 3: LÓGICA DEL MÉTODO GRÁFICO (MODIFICADO)
 # ==============================================================================
 
-def resolver_grafico(funcion_objetivo, restricciones):
+def resolver_grafico(variable_names, funcion_objetivo, restricciones):
     """
     Resuelve un problema de programación lineal de dos variables de MAXIMIZACIÓN.
     """
-    # MODIFICACIÓN: Se elimina el parámetro 'tipo_problema'.
+    # MODIFICACIÓN: Acepta 'variable_names' como parámetro.
     print("\n--- Iniciando Método Gráfico ---")
     
     d = np.linspace(-1, 50, 500)
@@ -177,7 +177,8 @@ def resolver_grafico(funcion_objetivo, restricciones):
         rhs = r['rhs']
         condicion_str = f"{coefs[0]}*x1 + {coefs[1]}*x2 {r['desigualdad']} {rhs}"
         condiciones_factibles &= eval(condicion_str)
-        print(f"R{i+1}) {coefs[0]}x1 + {coefs[1]}x2 {r['desigualdad']} {rhs}")
+        # MODIFICACIÓN: Usa los nombres de variables en la descripción de la restricción.
+        print(f"R{i+1}) {coefs[0]} {variable_names[0]} + {coefs[1]} {variable_names[1]} {r['desigualdad']} {rhs}")
 
         if coefs[1] != 0:
             x2_line = (rhs - coefs[0] * d) / coefs[1]
@@ -189,25 +190,23 @@ def resolver_grafico(funcion_objetivo, restricciones):
               origin="lower", cmap="Greens", alpha=0.3)
 
     ejes = [{'coeficientes': np.array([1, 0]), 'rhs': 0}, {'coeficientes': np.array([0, 1]), 'rhs': 0}]
+    # (El resto de la lógica de cálculo de vértices no necesita cambios)
     todas_las_lineas = restricciones + ejes
     puntos_interseccion = []
+    #... (código sin cambios)
     for line1, line2 in combinations(todas_las_lineas, 2):
         try:
             punto = np.linalg.solve(np.array([line1['coeficientes'], line2['coeficientes']]), np.array([line1['rhs'], line2['rhs']]))
             puntos_interseccion.append(punto)
         except np.linalg.LinAlgError:
             continue
-            
     vertices_factibles = []
-    print("\n--- Vértices (Puntos de Esquina) ---")
     for p in puntos_interseccion:
         if p[0] < -1e-6 or p[1] < -1e-6: continue
         es_factible = True
         for r in restricciones:
             valor_evaluado = np.dot(r['coeficientes'], p)
-            if (r['desigualdad'] == '<=' and valor_evaluado > r['rhs'] + 1e-6) or \
-               (r['desigualdad'] == '>=' and valor_evaluado < r['rhs'] - 1e-6) or \
-               (r['desigualdad'] == '=' and not np.isclose(valor_evaluado, r['rhs'])):
+            if (r['desigualdad'] == '<=' and valor_evaluado > r['rhs'] + 1e-6) or (r['desigualdad'] == '>=' and valor_evaluado < r['rhs'] - 1e-6) or (r['desigualdad'] == '=' and not np.isclose(valor_evaluado, r['rhs'])):
                 es_factible = False
                 break
         if es_factible and not any(np.allclose(p, v) for v in vertices_factibles):
@@ -219,7 +218,6 @@ def resolver_grafico(funcion_objetivo, restricciones):
         return
 
     print("\n--- Evaluación de la Función Objetivo en cada Vértice Factible ---")
-    # MODIFICACIÓN: Se busca siempre el valor máximo.
     mejor_valor = -float('inf')
     punto_optimo = None
     for v in vertices_factibles:
@@ -231,14 +229,16 @@ def resolver_grafico(funcion_objetivo, restricciones):
 
     print("\n--- Solución Óptima ---")
     print(f"El valor óptimo de Z es {mejor_valor:.2f}")
-    print(f"Se alcanza en el punto x1 = {punto_optimo[0]:.2f}, x2 = {punto_optimo[1]:.2f}")
+    # MODIFICACIÓN: Usa los nombres de las variables en la solución final.
+    print(f"Se alcanza en el punto {variable_names[0]} = {punto_optimo[0]:.2f}, {variable_names[1]} = {punto_optimo[1]:.2f}")
 
     vertices_np = np.array(vertices_factibles)
     ax.scatter(vertices_np[:, 0], vertices_np[:, 1], c='red', zorder=5)
     ax.scatter(punto_optimo[0], punto_optimo[1], c='blue', s=100, zorder=6, label='Punto Óptimo')
     
-    ax.set_xlabel("x1")
-    ax.set_ylabel("x2")
+    # MODIFICACIÓN: Usa los nombres de las variables en los ejes del gráfico.
+    ax.set_xlabel(variable_names[0])
+    ax.set_ylabel(variable_names[1])
     ax.legend()
     ax.grid(True)
     max_x = max(v[0] for v in vertices_factibles) + 5
@@ -256,17 +256,17 @@ def menu_principal():
     """
     Muestra el menú principal y dirige el flujo de la aplicación.
     """
-    # MODIFICACIÓN: La función de entrada ya no devuelve 'tipo_problema'.
-    funcion_objetivo, restricciones = obtener_datos_lp()
+    # MODIFICACIÓN: La función de entrada ahora devuelve 3 valores.
+    variable_names, funcion_objetivo, restricciones = obtener_datos_lp()
     
     print("\n--- Resumen del Problema Ingresado ---")
-    # MODIFICACIÓN: El mensaje es fijo a 'Maximización'.
     print("Tipo de Problema: Maximización")
-    z_str = "Z = " + " + ".join([f"{c}x{i+1}" for i, c in enumerate(funcion_objetivo)])
+    # MODIFICACIÓN: Muestra los nombres de las variables en el resumen.
+    z_str = "Z = " + " + ".join([f"{c} {variable_names[i]}" for i, c in enumerate(funcion_objetivo)])
     print(f"Función Objetivo: {z_str}")
     print("Sujeto a las siguientes restricciones:")
     for i, r in enumerate(restricciones):
-        r_str = " + ".join([f"{c}x{j+1}" for j, c in enumerate(r['coeficientes'])])
+        r_str = " + ".join([f"{c} {variable_names[j]}" for j, c in enumerate(r['coeficientes'])])
         print(f"  {i+1}) {r_str} {r['desigualdad']} {r['rhs']}")
 
     print("\n--- ¿Qué método deseas utilizar? ---")
@@ -277,14 +277,14 @@ def menu_principal():
         opcion = input("Selecciona una opción (1 o 2): ")
         if opcion == '1':
             print("\nIniciando solución con Método Simplex...")
-            # MODIFICACIÓN: Se llama a la función sin el 'tipo_problema'.
-            resolver_simplex(funcion_objetivo, restricciones)
+            # MODIFICACIÓN: Pasa 'variable_names' a la función.
+            resolver_simplex(variable_names, funcion_objetivo, restricciones)
             break
         elif opcion == '2':
             if len(funcion_objetivo) == 2:
                 print("\nIniciando solución con Método Gráfico...")
-                # MODIFICACIÓN: Se llama a la función sin el 'tipo_problema'.
-                resolver_grafico(funcion_objetivo, restricciones)
+                # MODIFICACIÓN: Pasa 'variable_names' a la función.
+                resolver_grafico(variable_names, funcion_objetivo, restricciones)
                 break
             else:
                 print("Error: El método gráfico solo se puede usar con 2 variables.")
