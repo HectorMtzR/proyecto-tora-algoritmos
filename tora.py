@@ -1,34 +1,32 @@
+# TORA Replication App - Maximization Only
+# ----------------------------------------
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from itertools import combinations
 
 # ==============================================================================
-# SECCIÓN 1: ENTRADA DE DATOS DEL USUARIO
+# SECCIÓN 1: ENTRADA DE DATOS DEL USUARIO (MODIFICADO)
 # ==============================================================================
 
 def obtener_datos_lp():
     """
-    Guía al usuario para que ingrese un problema de programación lineal
-    y devuelve los datos en un formato estructurado.
+    Guía al usuario para que ingrese un problema de programación lineal de MAXIMIZACIÓN.
     """
-    print("--- Asistente para la Creación de Problemas de Programación Lineal ---")
+    print("--- Asistente para la Creación de Problemas de Programación Lineal (Maximización) ---")
 
-    # 1. Definir tipo de problema (Maximizar o Minimizar)
-    while True:
-        tipo_problema = input("¿El problema es de Maximización (max) o Minimización (min)?: ").lower()
-        if tipo_problema in ['max', 'min']:
-            break
-        print("Entrada no válida. Por favor, escribe 'max' o 'min'.")
+    # MODIFICACIÓN: Se elimina la pregunta sobre el tipo de problema.
+    # Ahora siempre será 'max'.
 
-    # 2. Ingresar la Función Objetivo
+    # Ingresar la Función Objetivo
     print("\nIntroduce los coeficientes de la función objetivo (Z), separados por espacios.")
     print("Ejemplo: para Z = 3x1 + 5x2, escribe: 3 5")
     coeficientes_str = input("Coeficientes: ").split()
     funcion_objetivo = np.array([float(c) for c in coeficientes_str])
     num_variables = len(funcion_objetivo)
 
-    # 3. Ingresar las Restricciones
+    # Ingresar las Restricciones
     print(f"\nAhora, introduce las restricciones. El problema tiene {num_variables} variables (x1, x2, ...).")
     restricciones = []
     i = 1
@@ -64,18 +62,18 @@ def obtener_datos_lp():
         i += 1
         
     print("\n¡Problema ingresado con éxito!")
-    return tipo_problema, funcion_objetivo, restricciones
+    # MODIFICACIÓN: Solo devolvemos la función objetivo y las restricciones.
+    return funcion_objetivo, restricciones
 
 # ==============================================================================
-# SECCIÓN 2: LÓGICA DEL MÉTODO SIMPLEX
+# SECCIÓN 2: LÓGICA DEL MÉTODO SIMPLEX (MODIFICADO)
 # ==============================================================================
 
-def resolver_simplex(tipo_problema, funcion_objetivo, restricciones):
+def resolver_simplex(funcion_objetivo, restricciones):
     """
-    Resuelve un problema de programación lineal usando el método Simplex.
+    Resuelve un problema de programación lineal de MAXIMIZACIÓN usando el método Simplex.
     """
-    if tipo_problema != 'max':
-        funcion_objetivo = -funcion_objetivo
+    # MODIFICACIÓN: Se elimina el parámetro 'tipo_problema' y la lógica de conversión.
 
     num_variables = len(funcion_objetivo)
     num_restricciones = len(restricciones)
@@ -112,7 +110,7 @@ def resolver_simplex(tipo_problema, funcion_objetivo, restricciones):
         min_cociente = float('inf')
 
         for i in range(num_restricciones):
-            if col_piv[i] > 1e-6: # Evitar división por cero o números muy pequeños
+            if col_piv[i] > 1e-6:
                 cociente = rhs[i] / col_piv[i]
                 if cociente < min_cociente:
                     min_cociente = cociente
@@ -143,9 +141,7 @@ def resolver_simplex(tipo_problema, funcion_objetivo, restricciones):
     
     print("\n--- Resultados ---")
     valor_optimo_z = tableau[-1, -1]
-    if tipo_problema == 'min':
-        valor_optimo_z *= -1
-        
+    # MODIFICACIÓN: Se elimina la comprobación para problemas 'min'.
     print(f"Valor óptimo de Z = {valor_optimo_z:.4f}")
 
     for i in range(num_variables):
@@ -160,14 +156,14 @@ def resolver_simplex(tipo_problema, funcion_objetivo, restricciones):
             print(f"{column_labels[i]} = 0.0000")
 
 # ==============================================================================
-# SECCIÓN 3: LÓGICA DEL MÉTODO GRÁFICO
+# SECCIÓN 3: LÓGICA DEL MÉTODO GRÁFICO (MODIFICADO)
 # ==============================================================================
 
-def resolver_grafico(tipo_problema, funcion_objetivo, restricciones):
+def resolver_grafico(funcion_objetivo, restricciones):
     """
-    Resuelve un problema de programación lineal de dos variables
-    usando el método gráfico.
+    Resuelve un problema de programación lineal de dos variables de MAXIMIZACIÓN.
     """
+    # MODIFICACIÓN: Se elimina el parámetro 'tipo_problema'.
     print("\n--- Iniciando Método Gráfico ---")
     
     d = np.linspace(-1, 50, 500)
@@ -223,13 +219,13 @@ def resolver_grafico(tipo_problema, funcion_objetivo, restricciones):
         return
 
     print("\n--- Evaluación de la Función Objetivo en cada Vértice Factible ---")
-    mejor_valor = -float('inf') if tipo_problema == 'max' else float('inf')
+    # MODIFICACIÓN: Se busca siempre el valor máximo.
+    mejor_valor = -float('inf')
     punto_optimo = None
     for v in vertices_factibles:
         valor_z = np.dot(funcion_objetivo, v)
         print(f"En el vértice ({v[0]:.2f}, {v[1]:.2f}), Z = {valor_z:.2f}")
-        if (tipo_problema == 'max' and valor_z > mejor_valor) or \
-           (tipo_problema == 'min' and valor_z < mejor_valor):
+        if valor_z > mejor_valor:
             mejor_valor = valor_z
             punto_optimo = v
 
@@ -253,17 +249,19 @@ def resolver_grafico(tipo_problema, funcion_objetivo, restricciones):
     plt.show()
 
 # ==============================================================================
-# SECCIÓN 4: MENÚ PRINCIPAL Y EJECUCIÓN
+# SECCIÓN 4: MENÚ PRINCIPAL Y EJECUCIÓN (MODIFICADO)
 # ==============================================================================
 
 def menu_principal():
     """
     Muestra el menú principal y dirige el flujo de la aplicación.
     """
-    tipo_problema, funcion_objetivo, restricciones = obtener_datos_lp()
+    # MODIFICACIÓN: La función de entrada ya no devuelve 'tipo_problema'.
+    funcion_objetivo, restricciones = obtener_datos_lp()
     
     print("\n--- Resumen del Problema Ingresado ---")
-    print(f"Tipo de Problema: {'Maximizar' if tipo_problema == 'max' else 'Minimizar'}")
+    # MODIFICACIÓN: El mensaje es fijo a 'Maximización'.
+    print("Tipo de Problema: Maximización")
     z_str = "Z = " + " + ".join([f"{c}x{i+1}" for i, c in enumerate(funcion_objetivo)])
     print(f"Función Objetivo: {z_str}")
     print("Sujeto a las siguientes restricciones:")
@@ -278,15 +276,15 @@ def menu_principal():
     while True:
         opcion = input("Selecciona una opción (1 o 2): ")
         if opcion == '1':
-            # Nota: La implementación Simplex actual es básica y funciona mejor para
-            # problemas de maximización con restricciones '<='.
             print("\nIniciando solución con Método Simplex...")
-            resolver_simplex(tipo_problema, funcion_objetivo, restricciones)
+            # MODIFICACIÓN: Se llama a la función sin el 'tipo_problema'.
+            resolver_simplex(funcion_objetivo, restricciones)
             break
         elif opcion == '2':
             if len(funcion_objetivo) == 2:
                 print("\nIniciando solución con Método Gráfico...")
-                resolver_grafico(tipo_problema, funcion_objetivo, restricciones)
+                # MODIFICACIÓN: Se llama a la función sin el 'tipo_problema'.
+                resolver_grafico(funcion_objetivo, restricciones)
                 break
             else:
                 print("Error: El método gráfico solo se puede usar con 2 variables.")
