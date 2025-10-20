@@ -8,12 +8,9 @@ from itertools import combinations
 # ==============================================================================
 
 def obtener_datos_lp():
-    """
-    Guía al usuario para que ingrese un problema de programación lineal de MAXIMIZACIÓN,
-    incluyendo nombres para las variables.
-    """
-
-    print("\nIntroduce los coeficientes de la función objetivo (Z), separados por espacios.")
+    #Inicio de procedimeinto para ingrear problema de programación lineal orientado a la maximización.
+    
+    print("\n Introduzca los coeficientes correspondientes de la función objetivo [Z], separados por espacios.")
     print("Ejemplo: para Z = 3x1 + 5x2, escribe: 3 5")
     coeficientes_str = input("Coeficientes: ").split()
     funcion_objetivo = np.array([float(c) for c in coeficientes_str])
@@ -97,13 +94,13 @@ def resolver_simplex(variable_names, funcion_objetivo, restricciones):
     while np.any(tabla[-1, :-1] < 0):
         print(f"\n--- Iteración #{iteracion} ---")
         
-        columna_pivote = np.argmin(tabla[-1, :-1])
-        print(f"La variable que entra a la base es: {column_labels[columna_pivote]}")
+        columna_piv = np.argmin(tabla[-1, :-1])
+        print(f"La variable que entra a la base es: {column_labels[columna_piv]}")
 
         rhs = tabla[:-1, -1]
-        col_piv = tabla[:-1, columna_pivote]
+        col_piv = tabla[:-1, columna_piv]
         
-        fila_pivote = -1
+        fila_piv = -1
         min_cociente = float('inf')
 
         for i in range(num_restricciones):
@@ -111,21 +108,21 @@ def resolver_simplex(variable_names, funcion_objetivo, restricciones):
                 cociente = rhs[i] / col_piv[i]
                 if cociente < min_cociente:
                     min_cociente = cociente
-                    fila_pivote = i
+                    fila_piv = i
         
-        if fila_pivote == -1:
+        if fila_piv == -1:
             print("Error: El problema es no acotado.")
             return
 
-        print(f"La fila pivote es la fila #{fila_pivote + 1}")
+        print(f"La fila piv es la fila #{fila_piv + 1}")
         
-        elemento_pivote = tabla[fila_pivote, columna_pivote]
-        tabla[fila_pivote, :] /= elemento_pivote
+        elemento_piv = tabla[fila_piv, columna_piv]
+        tabla[fila_piv, :] /= elemento_piv
         
         for i in range(num_restricciones + 1):
-            if i != fila_pivote:
-                factor = tabla[i, columna_pivote]
-                tabla[i, :] -= factor * tabla[fila_pivote, :]
+            if i != fila_piv:
+                factor = tabla[i, columna_piv]
+                tabla[i, :] -= factor * tabla[fila_piv, :]
         
         print("\n--- Tabla Actualizada ---")
         print(pd.DataFrame(tabla, columns=column_labels))
@@ -157,7 +154,7 @@ def resolver_simplex(variable_names, funcion_objetivo, restricciones):
 
 def resolver_grafico(variable_names, funcion_objetivo, restricciones):
     """
-    Resuelve un problema de programación lineal de dos variables de MAXIMIZACIÓN.
+    Resolución por medio del método gráfico, exclusivo para 2 variables.
     """
     
     print("\n--- Iniciando Método Gráfico ---")
@@ -246,7 +243,7 @@ def resolver_grafico(variable_names, funcion_objetivo, restricciones):
 # SECCIÓN 4: MENÚ PRINCIPAL Y EJECUCIÓN
 # ==============================================================================
 
-def menu_principal():
+def menu():
     """
     Muestra el menú principal y dirige el flujo de la aplicación.
     """
@@ -282,7 +279,7 @@ def menu_principal():
             else:
                 print("Error: El método gráfico solo se puede usar con 2 variables.")
         else:
-            print("Opción no válida. Inténtalo de nuevo.")
+            print("Opción invalida. Intente de nuevo.")
 
 if __name__ == "__main__":
-    menu_principal()
+    menu()
