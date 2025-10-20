@@ -1,13 +1,10 @@
-# TORA Replication App - Custom Variable Names
-# --------------------------------------------
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from itertools import combinations
 
 # ==============================================================================
-# SECCIÓN 1: ENTRADA DE DATOS DEL USUARIO (MODIFICADO)
+# SECCIÓN 1: ENTRADA DE DATOS DEL USUARIO 
 # ==============================================================================
 
 def obtener_datos_lp():
@@ -15,7 +12,6 @@ def obtener_datos_lp():
     Guía al usuario para que ingrese un problema de programación lineal de MAXIMIZACIÓN,
     incluyendo nombres para las variables.
     """
-    print("--- Asistente para la Creación de Problemas de Programación Lineal (Maximización) ---")
 
     print("\nIntroduce los coeficientes de la función objetivo (Z), separados por espacios.")
     print("Ejemplo: para Z = 3x1 + 5x2, escribe: 3 5")
@@ -23,7 +19,7 @@ def obtener_datos_lp():
     funcion_objetivo = np.array([float(c) for c in coeficientes_str])
     num_variables = len(funcion_objetivo)
 
-    # MODIFICACIÓN: Pedir los nombres de las variables
+    
     print("\n--- Asignación de Nombres a las Variables ---")
     variable_names = []
     for i in range(num_variables):
@@ -65,47 +61,47 @@ def obtener_datos_lp():
         i += 1
         
     print("\n¡Problema ingresado con éxito!")
-    # MODIFICACIÓN: Devolvemos también la lista con los nombres de las variables.
+    
     return variable_names, funcion_objetivo, restricciones
 
 # ==============================================================================
-# SECCIÓN 2: LÓGICA DEL MÉTODO SIMPLEX (MODIFICADO)
+# SECCIÓN 2: LÓGICA DEL MÉTODO SIMPLEX
 # ==============================================================================
 
 def resolver_simplex(variable_names, funcion_objetivo, restricciones):
     """
     Resuelve un problema de programación lineal de MAXIMIZACIÓN usando el método Simplex.
     """
-    # MODIFICACIÓN: Acepta 'variable_names' como parámetro.
+    
     num_variables = len(funcion_objetivo)
     num_restricciones = len(restricciones)
     
-    num_cols_tableau = num_variables + num_restricciones + 1
-    tableau = np.zeros((num_restricciones + 1, num_cols_tableau))
+    num_cols_tabla = num_variables + num_restricciones + 1
+    tabla = np.zeros((num_restricciones + 1, num_cols_tabla))
 
     for i in range(num_restricciones):
-        tableau[i, :num_variables] = restricciones[i]['coeficientes']
-        tableau[i, num_variables + i] = 1
-        tableau[i, -1] = restricciones[i]['rhs']
+        tabla[i, :num_variables] = restricciones[i]['coeficientes']
+        tabla[i, num_variables + i] = 1
+        tabla[i, -1] = restricciones[i]['rhs']
 
-    tableau[-1, :num_variables] = -funcion_objetivo
+    tabla[-1, :num_variables] = -funcion_objetivo
     
-    # MODIFICACIÓN: Usa la lista 'variable_names' para las etiquetas de las columnas.
+    
     column_labels = variable_names + [f's{i+1}' for i in range(num_restricciones)] + ['RHS']
 
-    print("\n--- Tableau Inicial ---")
-    print(pd.DataFrame(tableau, columns=column_labels))
+    print("\n--- tabla Inicial ---")
+    print(pd.DataFrame(tabla, columns=column_labels))
     print("-" * 50)
     
     iteracion = 1
-    while np.any(tableau[-1, :-1] < 0):
+    while np.any(tabla[-1, :-1] < 0):
         print(f"\n--- Iteración #{iteracion} ---")
         
-        columna_pivote = np.argmin(tableau[-1, :-1])
+        columna_pivote = np.argmin(tabla[-1, :-1])
         print(f"La variable que entra a la base es: {column_labels[columna_pivote]}")
 
-        rhs = tableau[:-1, -1]
-        col_piv = tableau[:-1, columna_pivote]
+        rhs = tabla[:-1, -1]
+        col_piv = tabla[:-1, columna_pivote]
         
         fila_pivote = -1
         min_cociente = float('inf')
@@ -123,47 +119,47 @@ def resolver_simplex(variable_names, funcion_objetivo, restricciones):
 
         print(f"La fila pivote es la fila #{fila_pivote + 1}")
         
-        elemento_pivote = tableau[fila_pivote, columna_pivote]
-        tableau[fila_pivote, :] /= elemento_pivote
+        elemento_pivote = tabla[fila_pivote, columna_pivote]
+        tabla[fila_pivote, :] /= elemento_pivote
         
         for i in range(num_restricciones + 1):
             if i != fila_pivote:
-                factor = tableau[i, columna_pivote]
-                tableau[i, :] -= factor * tableau[fila_pivote, :]
+                factor = tabla[i, columna_pivote]
+                tabla[i, :] -= factor * tabla[fila_pivote, :]
         
-        print("\n--- Tableau Actualizado ---")
-        print(pd.DataFrame(tableau, columns=column_labels))
+        print("\n--- Tabla Actualizada ---")
+        print(pd.DataFrame(tabla, columns=column_labels))
         print("-" * 50)
         iteracion += 1
 
     print("\n--- Fin del Algoritmo Simplex (Solución Óptima) ---")
-    print("\n--- Tableau Final ---")
-    print(pd.DataFrame(tableau, columns=column_labels))
+    print("\n--- tabla Final ---")
+    print(pd.DataFrame(tabla, columns=column_labels))
     
     print("\n--- Resultados ---")
-    valor_optimo_z = tableau[-1, -1]
+    valor_optimo_z = tabla[-1, -1]
     print(f"Valor óptimo de Z = {valor_optimo_z:.4f}")
 
     for i in range(num_variables):
-        columna = tableau[:, i]
+        columna = tabla[:, i]
         es_basica = (np.count_nonzero(columna) == 1) and (np.sum(columna) == 1)
         
         if es_basica:
             fila_del_uno = np.where(columna == 1)[0][0]
-            valor_variable = tableau[fila_del_uno, -1]
+            valor_variable = tabla[fila_del_uno, -1]
             print(f"{column_labels[i]} = {valor_variable:.4f}")
         else:
             print(f"{column_labels[i]} = 0.0000")
 
 # ==============================================================================
-# SECCIÓN 3: LÓGICA DEL MÉTODO GRÁFICO (MODIFICADO)
+# SECCIÓN 3: LÓGICA DEL MÉTODO GRÁFICO
 # ==============================================================================
 
 def resolver_grafico(variable_names, funcion_objetivo, restricciones):
     """
     Resuelve un problema de programación lineal de dos variables de MAXIMIZACIÓN.
     """
-    # MODIFICACIÓN: Acepta 'variable_names' como parámetro.
+    
     print("\n--- Iniciando Método Gráfico ---")
     
     d = np.linspace(-1, 50, 500)
@@ -177,7 +173,7 @@ def resolver_grafico(variable_names, funcion_objetivo, restricciones):
         rhs = r['rhs']
         condicion_str = f"{coefs[0]}*x1 + {coefs[1]}*x2 {r['desigualdad']} {rhs}"
         condiciones_factibles &= eval(condicion_str)
-        # MODIFICACIÓN: Usa los nombres de variables en la descripción de la restricción.
+        
         print(f"R{i+1}) {coefs[0]} {variable_names[0]} + {coefs[1]} {variable_names[1]} {r['desigualdad']} {rhs}")
 
         if coefs[1] != 0:
@@ -229,14 +225,12 @@ def resolver_grafico(variable_names, funcion_objetivo, restricciones):
 
     print("\n--- Solución Óptima ---")
     print(f"El valor óptimo de Z es {mejor_valor:.2f}")
-    # MODIFICACIÓN: Usa los nombres de las variables en la solución final.
     print(f"Se alcanza en el punto {variable_names[0]} = {punto_optimo[0]:.2f}, {variable_names[1]} = {punto_optimo[1]:.2f}")
 
     vertices_np = np.array(vertices_factibles)
     ax.scatter(vertices_np[:, 0], vertices_np[:, 1], c='red', zorder=5)
     ax.scatter(punto_optimo[0], punto_optimo[1], c='blue', s=100, zorder=6, label='Punto Óptimo')
     
-    # MODIFICACIÓN: Usa los nombres de las variables en los ejes del gráfico.
     ax.set_xlabel(variable_names[0])
     ax.set_ylabel(variable_names[1])
     ax.legend()
@@ -249,19 +243,18 @@ def resolver_grafico(variable_names, funcion_objetivo, restricciones):
     plt.show()
 
 # ==============================================================================
-# SECCIÓN 4: MENÚ PRINCIPAL Y EJECUCIÓN (MODIFICADO)
+# SECCIÓN 4: MENÚ PRINCIPAL Y EJECUCIÓN
 # ==============================================================================
 
 def menu_principal():
     """
     Muestra el menú principal y dirige el flujo de la aplicación.
     """
-    # MODIFICACIÓN: La función de entrada ahora devuelve 3 valores.
     variable_names, funcion_objetivo, restricciones = obtener_datos_lp()
     
     print("\n--- Resumen del Problema Ingresado ---")
     print("Tipo de Problema: Maximización")
-    # MODIFICACIÓN: Muestra los nombres de las variables en el resumen.
+
     z_str = "Z = " + " + ".join([f"{c} {variable_names[i]}" for i, c in enumerate(funcion_objetivo)])
     print(f"Función Objetivo: {z_str}")
     print("Sujeto a las siguientes restricciones:")
@@ -277,13 +270,13 @@ def menu_principal():
         opcion = input("Selecciona una opción (1 o 2): ")
         if opcion == '1':
             print("\nIniciando solución con Método Simplex...")
-            # MODIFICACIÓN: Pasa 'variable_names' a la función.
+            
             resolver_simplex(variable_names, funcion_objetivo, restricciones)
             break
         elif opcion == '2':
             if len(funcion_objetivo) == 2:
                 print("\nIniciando solución con Método Gráfico...")
-                # MODIFICACIÓN: Pasa 'variable_names' a la función.
+                
                 resolver_grafico(variable_names, funcion_objetivo, restricciones)
                 break
             else:

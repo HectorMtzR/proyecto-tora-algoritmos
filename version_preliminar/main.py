@@ -1,9 +1,9 @@
 # archivo: main.py
 
-from entrada_usuario import obtener_datos_lp
-import metodo_simplex
+from version_preliminar.entrada_usuario import obtener_datos_lp
+import version_preliminar.metodo_simplex as metodo_simplex
 # ¡Importamos el nuevo módulo gráfico!
-import metodo_grafico
+import version_preliminar.metodo_grafico as metodo_grafico
 
 def menu_principal():
     """
