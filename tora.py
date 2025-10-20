@@ -8,9 +8,9 @@ from itertools import combinations
 # ==============================================================================
 
 def obtener_datos_lp():
-    #Inicio de procedimeinto para ingrear problema de programación lineal orientado a la maximización.
+    #Inicio del procedimiento
     
-    print("\n Introduzca los coeficientes correspondientes de la función objetivo [Z], separados por espacios.")
+    print("\n Introduzca los coeficientes correspondientes de Z, separados por espacios. (Función Objetivo)")
     print("Ejemplo: para Z = 3x1 + 5x2, escribe: 3 5")
     coeficientes_str = input("Coeficientes: ").split()
     funcion_objetivo = np.array([float(c) for c in coeficientes_str])
@@ -71,12 +71,12 @@ def resolver_simplex(variable_names, funcion_objetivo, restricciones):
     """
     
     num_variables = len(funcion_objetivo)
-    num_restricciones = len(restricciones)
+    res_totales = len(restricciones)
     
-    num_cols_tabla = num_variables + num_restricciones + 1
-    tabla = np.zeros((num_restricciones + 1, num_cols_tabla))
+    num_cols_tabla = num_variables + res_totales + 1
+    tabla = np.zeros((res_totales + 1, num_cols_tabla))
 
-    for i in range(num_restricciones):
+    for i in range(res_totales):
         tabla[i, :num_variables] = restricciones[i]['coeficientes']
         tabla[i, num_variables + i] = 1
         tabla[i, -1] = restricciones[i]['rhs']
@@ -84,9 +84,9 @@ def resolver_simplex(variable_names, funcion_objetivo, restricciones):
     tabla[-1, :num_variables] = -funcion_objetivo
     
     
-    column_labels = variable_names + [f's{i+1}' for i in range(num_restricciones)] + ['RHS']
+    column_labels = variable_names + [f's{i+1}' for i in range(res_totales)] + ['RHS']
 
-    print("\n--- tabla Inicial ---")
+    print("\n--- Tabla Inicial ---")
     print(pd.DataFrame(tabla, columns=column_labels))
     print("-" * 50)
     
@@ -103,7 +103,7 @@ def resolver_simplex(variable_names, funcion_objetivo, restricciones):
         fila_piv = -1
         min_cociente = float('inf')
 
-        for i in range(num_restricciones):
+        for i in range(res_totales):
             if col_piv[i] > 1e-6:
                 cociente = rhs[i] / col_piv[i]
                 if cociente < min_cociente:
@@ -119,7 +119,7 @@ def resolver_simplex(variable_names, funcion_objetivo, restricciones):
         elemento_piv = tabla[fila_piv, columna_piv]
         tabla[fila_piv, :] /= elemento_piv
         
-        for i in range(num_restricciones + 1):
+        for i in range(res_totales + 1):
             if i != fila_piv:
                 factor = tabla[i, columna_piv]
                 tabla[i, :] -= factor * tabla[fila_piv, :]
@@ -220,8 +220,8 @@ def resolver_grafico(variable_names, funcion_objetivo, restricciones):
             mejor_valor = valor_z
             punto_optimo = v
 
-    print("\n--- Solución Óptima ---")
-    print(f"El valor óptimo de Z es {mejor_valor:.2f}")
+    print("\n--- Solución Factible / Óptima ---")
+    print(f"La solución de Z es {mejor_valor:.2f}")
     print(f"Se alcanza en el punto {variable_names[0]} = {punto_optimo[0]:.2f}, {variable_names[1]} = {punto_optimo[1]:.2f}")
 
     vertices_np = np.array(vertices_factibles)
@@ -264,7 +264,7 @@ def menu():
     print("2. Método Gráfico (solo si el problema tiene 2 variables)")
     
     while True:
-        opcion = input("Selecciona una opción (1 o 2): ")
+        opcion = input("Selecciona una opción para iniciar la solución del problema (1 o 2): ")
         if opcion == '1':
             print("\nIniciando solución con Método Simplex...")
             
